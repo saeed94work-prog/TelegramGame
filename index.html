@@ -1,182 +1,68 @@
-<!DOCTYPE html>
-<html lang="fa">
+<!doctype html>
+<html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Space Rush</title>
-<style>
-html,body{margin:0;height:100%;background:#050814;color:#fff;font-family:sans-serif}
-canvas{display:block;width:100%;height:100%}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+  <title>Space Rush — Telegram Mini Game</title>
+  <style>
+    /* استایل‌ها: رابط کاربری ساده و تمیز */
+    html,body{margin:0;height:100%;background:#050814;color:#fff;font-family:sans-serif}
+    canvas{display:block;width:100%;height:100%}
+    .hide{display:none!important}
+  </style>
 </head>
 <body>
-<canvas id="c"></canvas>
-
+<canvas id="game"></canvas>
 <script>
-/* ================== SETUP ================== */
-const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d");
-const V = { w:720, h:1280 };
-let scale=1, ox=0, oy=0;
+/* تنظیمات اولیه */
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
+const V={w:720,h:1280};let S={scale:1,ox:0,oy:0};
+function resize(){const r=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+canvas.width=r.width*dpr;canvas.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+const s=Math.min(r.width/V.w,r.height/V.h);S.scale=s;S.ox=(r.width-V.w*s)/2;S.oy=(r.height-V.h*s)/2;}
+window.onresize=resize;resize();
+function toV(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left-S.ox)/S.scale,y:(e.clientY-r.top-S.oy)/S.scale};}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),rnd=(a,b)=>a+Math.random()*(b-a);
 
-function resize(){
-  const r = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = r.width*dpr;
-  canvas.height = r.height*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  scale = Math.min(r.width/V.w, r.height/V.h);
-  ox = (r.width - V.w*scale)/2;
-  oy = (r.height - V.h*scale)/2;
-}
-window.addEventListener("resize",resize);
-resize();
+/* وضعیت بازی */
+let running=false,time=0,score=0,level=1;
+const player={x:V.w/2,y:V.h*0.75,tx:V.w/2,ty:V.h*0.75,r:20,hp:3};
+const rocks=[],bullets=[],enemies=[],eBullets=[];let shootCd=0;
 
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const rnd=(a,b)=>a+Math.random()*(b-a);
-
-/* ================== GAME STATE ================== */
-let time=0, score=0, running=true;
-const player={x:V.w/2,y:V.h*0.75,tx:V.w/2,ty:V.h*0.75,r:20};
-const meteors=[], bullets=[];
-let shootCD=0;
-
-/* ================== INPUT ================== */
-let drag=false;
-canvas.onpointerdown=e=>{
-  drag=true;
-  const p=toV(e);
-  player.tx=p.x; player.ty=p.y;
-};
-canvas.onpointermove=e=>{
-  if(!drag)return;
-  const p=toV(e);
-  player.tx=p.x; player.ty=p.y;
-};
+/* ورودی */
+let drag=false,lastTap=0;
+canvas.onpointerdown=e=>{drag=true;canvas.setPointerCapture(e.pointerId);
+const now=performance.now();if(now-lastTap<260)shoot();lastTap=now;
+const p=toV(e);player.tx=p.x;player.ty=p.y;};
+canvas.onpointermove=e=>{if(!drag)return;const p=toV(e);player.tx=p.x;player.ty=p.y;};
 canvas.onpointerup=()=>drag=false;
-window.onkeydown=e=>{ if(e.code==="Space") shoot(); };
+window.onkeydown=e=>{if(e.code==="Space")shoot();};
 
-function toV(e){
-  const r=canvas.getBoundingClientRect();
-  return {
-    x:(e.clientX-r.left-ox)/scale,
-    y:(e.clientY-r.top-oy)/scale
-  };
-}
+/* شلیک */
+function shoot(){if(shootCd>0)return;shootCd=.25;bullets.push({x:player.x,y:player.y-30,r:5,vy:-900});}
 
-/* ================== SPAWN ================== */
-function spawnMeteor(){
-  const r=rnd(24,48);
-  meteors.push({
-    x:rnd(r,V.w-r),
-    y:-r,
-    r,
-    vx:rnd(-40,40),
-    vy:rnd(120,200),
-    rot:rnd(0,Math.PI*2),
-    rs:rnd(-1,1),
-    shape:makeShape(r)
-  });
-}
-function makeShape(r){
-  const pts=[],n=8+rnd(0,4);
-  for(let i=0;i<n;i++){
-    const a=i/n*Math.PI*2;
-    pts.push({x:Math.cos(a)*r*rnd(.7,1.1),y:Math.sin(a)*r*rnd(.7,1.1)});
-  }
-  return pts;
-}
+/* ساخت اجرام */
+function spawnRock(progress){const r=rnd(22,48);rocks.push({x:rnd(r,V.w-r),y:-r,r,vx:rnd(-40,40),vy:140+progress*200,rot:rnd(0,Math.PI*2),rs:rnd(-1,1),shape:makeShape(r)});}
+function makeShape(r){const pts=[],n=10;for(let i=0;i<n;i++){const a=i/n*Math.PI*2;pts.push({x:Math.cos(a)*r*rnd(.7,1.1),y:Math.sin(a)*r*rnd(.7,1.1)});}return pts;}
 
-/* ================== SHOOT ================== */
-function shoot(){
-  if(shootCD>0)return;
-  shootCD=.25;
-  bullets.push({x:player.x,y:player.y-30,vy:-900});
-}
+/* آپدیت */
+function update(dt){time+=dt;shootCd=Math.max(0,shootCd-dt);const p=Math.min(1,time/60);
+if(Math.random()<dt*(0.3+p*0.6))spawnRock(p);
+player.x+= (player.tx-player.x)*dt*8;player.y+= (player.ty-player.y)*dt*8;
+player.x=clamp(player.x,player.r,V.w-player.r);player.y=clamp(player.y,V.h*.35,V.h-player.r);
+rocks.forEach((m,i)=>{m.x+=m.vx*dt;m.y+=m.vy*dt;m.rot+=m.rs*dt;if(m.y>V.h+100)rocks.splice(i,1);});
+bullets.forEach((b,i)=>{b.y+=b.vy*dt;if(b.y<-50)bullets.splice(i,1);});
+score+=dt*50*(1+p);}
 
-/* ================== UPDATE ================== */
-function update(dt){
-  time+=dt;
-  shootCD=Math.max(0,shootCD-dt);
-
-  // difficulty curve
-  const p=Math.min(1,time/60);
-
-  // spawn meteors slowly at start
-  if(Math.random()<dt*(0.4+p*0.8)) spawnMeteor();
-
-  // player smooth move
-  player.x+= (player.tx-player.x)*dt*8;
-  player.y+= (player.ty-player.y)*dt*8;
-  player.x=clamp(player.x,player.r,V.w-player.r);
-  player.y=clamp(player.y,V.h*.35,V.h-player.r);
-
-  // meteors
-  for(let i=meteors.length-1;i>=0;i--){
-    const m=meteors[i];
-    m.x+=m.vx*dt;
-    m.y+=m.vy*(1+p)*dt;
-    m.rot+=m.rs*dt;
-    if(m.y>V.h+100) meteors.splice(i,1);
-  }
-
-  // bullets
-  for(let i=bullets.length-1;i>=0;i--){
-    bullets[i].y+=bullets[i].vy*dt;
-    if(bullets[i].y<-50) bullets.splice(i,1);
-  }
-
-  score+=dt*50*(1+p);
-}
-
-/* ================== DRAW ================== */
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.save();
-  ctx.translate(ox,oy);
-  ctx.scale(scale,scale);
-
-  // background stars
-  ctx.fillStyle="#fff";
-  for(let i=0;i<80;i++)
-    ctx.fillRect(Math.random()*V.w,Math.random()*V.h,1,1);
-
-  // meteors
-  meteors.forEach(m=>{
-    ctx.save();
-    ctx.translate(m.x,m.y);
-    ctx.rotate(m.rot);
-    ctx.fillStyle="#7a4a2a";
-    ctx.beginPath();
-    m.shape.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
-    ctx.closePath(); ctx.fill();
-    ctx.restore();
-  });
-
-  // bullets
-  ctx.fillStyle="#35f0ff";
-  bullets.forEach(b=>ctx.fillRect(b.x-2,b.y-10,4,10));
-
-  // player
-  ctx.fillStyle="#35f0ff";
-  ctx.beginPath();
-  ctx.moveTo(player.x,player.y-30);
-  ctx.lineTo(player.x+20,player.y+20);
-  ctx.lineTo(player.x-20,player.y+20);
-  ctx.closePath(); ctx.fill();
-
-  ctx.restore();
-}
-
-/* ================== LOOP ================== */
-let last=performance.now();
-function loop(t){
-  const dt=Math.min(.033,(t-last)/1000);
-  last=t;
-  if(running){ update(dt); draw(); }
-  requestAnimationFrame(loop);
-}
-loop(last);
+/* رسم */
+function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();ctx.translate(S.ox,S.oy);ctx.scale(S.scale,S.scale);
+ctx.fillStyle="#fff";rocks.forEach(m=>{ctx.save();ctx.translate(m.x,m.y);ctx.rotate(m.rot);ctx.fillStyle="#7a4a2a";
+ctx.beginPath();m.shape.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill();ctx.restore();});
+ctx.fillStyle="#35f0ff";bullets.forEach(b=>ctx.fillRect(b.x-2,b.y-10,4,10));
+ctx.fillStyle="#35f0ff";ctx.beginPath();ctx.moveTo(player.x,player.y-30);ctx.lineTo(player.x+20,player.y+20);ctx.lineTo(player.x-20,player.y+20);ctx.closePath();ctx.fill();
+ctx.restore();}
+let last=performance.now();function loop(t){const dt=Math.min(.033,(t-last)/1000);last=t;if(running){update(dt);draw();}requestAnimationFrame(loop);}loop(last);
+running=true;
 </script>
 </body>
 </html>
