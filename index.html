@@ -1,130 +1,189 @@
 <!doctype html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
-  <title>Neon Dodger — Telegram Game</title>
+  <title>Neon Dodger 2 — Telegram Mini Game</title>
   <style>
     :root{
-      --bg:#070A12;
+      --bg0:#050713;
+      --bg1:#0b1030;
       --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.08);
       --text:rgba(255,255,255,.92);
-      --muted:rgba(255,255,255,.65);
+      --muted:rgba(255,255,255,.68);
       --neon:#35f0ff;
       --danger:#ff3b6b;
+      --gold:#ffd166;
       --ok:#35ff9a;
-      --shadow: 0 10px 30px rgba(0,0,0,.45);
+      --shadow: 0 10px 32px rgba(0,0,0,.48);
       --radius:16px;
     }
     *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-    html,body{height:100%; margin:0; background: radial-gradient(1200px 800px at 50% 20%, #121a3a 0%, var(--bg) 55%, #05070e 100%); color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;}
-    .wrap{height:100%; display:grid; grid-template-rows:auto 1fr auto; padding:14px; gap:12px; max-width:720px; margin:0 auto;}
+    html,body{height:100%; margin:0; background: radial-gradient(1100px 800px at 50% 18%, #142066 0%, var(--bg0) 55%, #04050c 100%); color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;}
+    .wrap{height:100%; display:grid; grid-template-rows:auto 1fr auto; padding:12px; gap:10px; max-width:760px; margin:0 auto;}
     .topbar{
       display:flex; align-items:center; justify-content:space-between; gap:10px;
       padding:12px 14px; border-radius: var(--radius);
       background: var(--panel); box-shadow: var(--shadow); backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,.08);
     }
     .brand{display:flex; flex-direction:column; gap:2px}
     .brand b{letter-spacing:.4px}
-    .brand small{color:var(--muted)}
-    .stats{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+    .brand small{color:var(--muted); line-height:1.35}
+    .stats{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
     .pill{
       padding:8px 10px; border-radius:999px; background: rgba(255,255,255,.07);
-      display:flex; gap:8px; align-items:center; min-width:120px; justify-content:space-between;
-      border:1px solid rgba(255,255,255,.06);
+      display:flex; gap:8px; align-items:center; min-width:118px; justify-content:space-between;
+      border:1px solid rgba(255,255,255,.08);
     }
     .pill span{color:var(--muted); font-size:12px}
     .pill b{font-variant-numeric: tabular-nums;}
     .stage{
       position:relative; border-radius: var(--radius); overflow:hidden; box-shadow: var(--shadow);
-      border: 1px solid rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      min-height: 320px;
     }
-    canvas{display:block; width:100%; height:auto; background: #060814;}
-    .hud{
-      position:absolute; inset:0; pointer-events:none;
-      display:flex; align-items:center; justify-content:center;
+    /* Make the game area responsive while preserving 9:16 feel */
+    .stage::before{
+      content:"";
+      display:block;
+      padding-top: 177.777%; /* 16/9 */
     }
+    canvas{
+      position:absolute; inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+      background: #060814;
+      touch-action:none;
+    }
+
+    .hud{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;}
     .card{
       pointer-events:auto;
-      width:min(520px, calc(100% - 28px));
-      background: rgba(10,12,20,.78);
-      border:1px solid rgba(255,255,255,.10);
+      width:min(560px, calc(100% - 24px));
+      background: rgba(9,11,20,.80);
+      border:1px solid rgba(255,255,255,.12);
       border-radius: 18px;
       padding:16px;
       backdrop-filter: blur(10px);
       box-shadow: var(--shadow);
     }
     .card h2{margin:0 0 6px; font-size:18px}
-    .card p{margin:0 0 12px; color:var(--muted); line-height:1.6; font-size:13px}
+    .card p{margin:0 0 12px; color:var(--muted); line-height:1.7; font-size:13px}
     .grid{display:grid; gap:10px; grid-template-columns: 1fr 1fr}
     button{
-      border:0; border-radius: 14px; padding:12px 12px; font-weight:700;
-      background: linear-gradient(135deg, rgba(53,240,255,.95), rgba(90,120,255,.95));
+      border:0; border-radius: 14px; padding:12px 12px; font-weight:800;
+      background: linear-gradient(135deg, rgba(53,240,255,.96), rgba(90,120,255,.96));
       color:#06101a; cursor:pointer; box-shadow: 0 10px 26px rgba(53,240,255,.22);
     }
     button.secondary{
       background: rgba(255,255,255,.08); color:var(--text);
-      box-shadow:none; border:1px solid rgba(255,255,255,.10);
+      box-shadow:none; border:1px solid rgba(255,255,255,.12);
     }
+
+    .row{display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+    .toggle{
+      display:flex; align-items:center; gap:10px; justify-content:space-between;
+      padding:10px 12px; border-radius: 14px;
+      background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10);
+      margin-top:10px;
+    }
+    .toggle label{color:var(--muted); font-size:13px}
+    .toggle input{width:42px; height:22px}
+    .select{
+      margin-top:10px;
+      padding:10px 12px; border-radius: 14px;
+      background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    select{
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 10px;
+      padding:8px 10px;
+      outline:none;
+    }
+
     .footer{
       display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
       padding:10px 14px; border-radius: var(--radius);
       background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06);
       color:var(--muted); font-size:12px;
     }
-    .controls{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
     .kbd{border:1px solid rgba(255,255,255,.12); border-bottom-width:2px; padding:3px 8px; border-radius:10px; color:var(--text); background: rgba(255,255,255,.06)}
     .hide{display:none !important;}
-    .hint{color:var(--muted)}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
-        <b>Neon Dodger</b>
-        <small>فرار کن، امتیاز بگیر، رکورد بزن</small>
+        <b>Neon Dodger 2</b>
+        <small>پاورآپ بگیر، کمبو بساز، رکورد بزن</small>
       </div>
       <div class="stats">
-        <div class="pill"><span>Score</span><b id="score">0</b></div>
-        <div class="pill"><span>Best</span><b id="best">0</b></div>
-        <div class="pill"><span>Level</span><b id="level">1</b></div>
+        <div class="pill"><span>Score</span><b id="uiScore">0</b></div>
+        <div class="pill"><span>Best</span><b id="uiBest">0</b></div>
+        <div class="pill"><span>Level</span><b id="uiLevel">1</b></div>
+        <div class="pill"><span>Combo</span><b id="uiCombo">x1</b></div>
       </div>
     </div>
 
     <div class="stage">
-      <canvas id="game" width="720" height="960"></canvas>
+      <canvas id="game"></canvas>
 
       <div class="hud" id="overlay">
-        <div class="card" id="startCard">
-          <h2>شروع بازی</h2>
+        <div class="card" id="cardHome">
+          <h2>شروع</h2>
           <p>
-            با <span class="kbd">لمس و کشیدن</span> یا کلیدهای <span class="kbd">←</span> <span class="kbd">→</span> حرکت کن.
-            هرچقدر بیشتر زنده بمونی امتیاز و سرعت بیشتر می‌شه.
+            کنترل: <span class="kbd">لمس و کشیدن</span> یا <span class="kbd">←</span> <span class="kbd">→</span> .
+            <br/>
+            پاورآپ‌ها: <b>Shield</b> (ضربه‌گیر)، <b>Slow</b> (کندکننده)، <b>Magnet</b> (جذب ستاره).
           </p>
           <div class="grid">
-            <button id="btnStart">Start</button>
-            <button class="secondary" id="btnHow">How to play</button>
+            <button id="btnPlay">Play</button>
+            <button class="secondary" id="btnSettings">Settings</button>
           </div>
-          <p class="hint" style="margin-top:10px">برای تلگرام: بازی داخل Web App عالی اجرا می‌شود.</p>
+          <p style="margin-top:10px;color:var(--muted)">کلید <span class="kbd">P</span> برای Pause.</p>
         </div>
 
-        <div class="card hide" id="howCard">
-          <h2>راهنما</h2>
-          <p>
-            هدف: از برخورد با موانع قرمز جلوگیری کن. ستاره‌ها امتیاز اضافه می‌دهند.
-            هر 20 ثانیه یک Level بالا می‌رود و سرعت بیشتر می‌شود.
-          </p>
-          <div class="grid">
-            <button class="secondary" id="btnBack">Back</button>
-            <button id="btnStart2">Start</button>
+        <div class="card hide" id="cardSettings">
+          <h2>Settings</h2>
+          <p>این تنظیمات روی دستگاه ذخیره می‌شن.</p>
+
+          <div class="toggle">
+            <label for="tglMute">Sound (Mute)</label>
+            <input id="tglMute" type="checkbox" />
+          </div>
+
+          <div class="toggle">
+            <label for="tglHaptics">Haptics (Vibration)</label>
+            <input id="tglHaptics" type="checkbox" checked />
+          </div>
+
+          <div class="select">
+            <label for="selQuality" style="color:var(--muted); font-size:13px">Quality</label>
+            <select id="selQuality">
+              <option value="1">High</option>
+              <option value="0.85">Medium</option>
+              <option value="0.7">Low</option>
+            </select>
+          </div>
+
+          <div class="grid" style="margin-top:12px">
+            <button class="secondary" id="btnBackHome">Back</button>
+            <button id="btnPlay2">Play</button>
           </div>
         </div>
 
-        <div class="card hide" id="overCard">
+        <div class="card hide" id="cardOver">
           <h2>Game Over</h2>
-          <p id="overText">—</p>
+          <p id="txtOver">—</p>
           <div class="grid">
             <button id="btnRetry">Retry</button>
             <button class="secondary" id="btnShare">Share score</button>
@@ -134,7 +193,7 @@
     </div>
 
     <div class="footer">
-      <div class="controls">
+      <div>
         <span class="kbd">Touch</span>
         <span class="kbd">← →</span>
         <span class="kbd">P</span> Pause
@@ -144,95 +203,196 @@
   </div>
 
   <script>
-    // Telegram WebApp integration (safe optional)
+    // Optional Telegram WebApp (works even if script not included)
     const TG = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-    const tgState = document.getElementById("tgState");
-    if (TG) {
-      tgState.textContent = "Telegram: WebApp ready";
-      try { TG.ready(); TG.expand(); } catch {}
-    }
+    document.getElementById("tgState").textContent = TG ? "Telegram: WebApp ready" : "Telegram: not detected";
+    if (TG) { try { TG.ready(); TG.expand(); } catch {} }
 
-    // Canvas & scale
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+    // UI
+    const uiScore = document.getElementById("uiScore");
+    const uiBest  = document.getElementById("uiBest");
+    const uiLevel = document.getElementById("uiLevel");
+    const uiCombo = document.getElementById("uiCombo");
 
-    const uiScore = document.getElementById("score");
-    const uiBest  = document.getElementById("best");
-    const uiLevel = document.getElementById("level");
+    const overlay = document.getElementById("overlay");
+    const cardHome = document.getElementById("cardHome");
+    const cardSettings = document.getElementById("cardSettings");
+    const cardOver = document.getElementById("cardOver");
+    const txtOver = document.getElementById("txtOver");
 
-    const overlay  = document.getElementById("overlay");
-    const startCard= document.getElementById("startCard");
-    const howCard  = document.getElementById("howCard");
-    const overCard = document.getElementById("overCard");
-    const overText = document.getElementById("overText");
-
-    const btnStart = document.getElementById("btnStart");
-    const btnHow   = document.getElementById("btnHow");
-    const btnBack  = document.getElementById("btnBack");
-    const btnStart2= document.getElementById("btnStart2");
+    const btnPlay = document.getElementById("btnPlay");
+    const btnPlay2 = document.getElementById("btnPlay2");
+    const btnSettings = document.getElementById("btnSettings");
+    const btnBackHome = document.getElementById("btnBackHome");
     const btnRetry = document.getElementById("btnRetry");
     const btnShare = document.getElementById("btnShare");
 
-    // Fixed internal resolution; rendered responsive via CSS width:100%
-    const W = canvas.width, H = canvas.height;
+    const tglMute = document.getElementById("tglMute");
+    const tglHaptics = document.getElementById("tglHaptics");
+    const selQuality = document.getElementById("selQuality");
+
+    // Settings storage
+    const SETTINGS_KEY = "neon2_settings";
+    const defaultSettings = { mute:false, haptics:true, quality:1 };
+    const settings = loadSettings();
+    tglMute.checked = settings.mute;
+    tglHaptics.checked = settings.haptics;
+    selQuality.value = String(settings.quality);
+
+    function loadSettings(){
+      try{
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (!raw) return {...defaultSettings};
+        const obj = JSON.parse(raw);
+        return { ...defaultSettings, ...obj };
+      }catch{
+        return {...defaultSettings};
+      }
+    }
+    function saveSettings(){
+      settings.mute = !!tglMute.checked;
+      settings.haptics = !!tglHaptics.checked;
+      settings.quality = Number(selQuality.value || 1);
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      resizeCanvas(); // apply quality scaling
+    }
+
+    tglMute.addEventListener("change", saveSettings);
+    tglHaptics.addEventListener("change", saveSettings);
+    selQuality.addEventListener("change", saveSettings);
+
+    // Lightweight sound (no assets)
+    let audioCtx = null;
+    function beep(freq=440, dur=0.06, type="sine", gain=0.03){
+      if (settings.mute) return;
+      try{
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const t0 = audioCtx.currentTime;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = type;
+        o.frequency.value = freq;
+        g.gain.value = gain;
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t0);
+        o.stop(t0 + dur);
+      }catch{}
+    }
+    function haptic(kind){
+      if (!settings.haptics) return;
+      if (TG) { try { TG.HapticFeedback.impactOccurred(kind || "light"); } catch {} }
+    }
+
+    // Canvas responsive: real resizing with DPR + "quality" factor
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const V = { w: 720, h: 1280 }; // virtual design resolution (9:16)
+    const S = { scale:1, ox:0, oy:0, vw:V.w, vh:V.h }; // letterbox transform
+
+    function resizeCanvas(){
+      const rect = canvas.getBoundingClientRect();
+      const dpr = (window.devicePixelRatio || 1) * (settings.quality || 1);
+
+      canvas.width  = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+
+      // We draw in CSS pixels coordinates (after setTransform)
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      // Letterbox virtual resolution into rect (in CSS pixels)
+      const rw = rect.width, rh = rect.height;
+      const s = Math.min(rw / V.w, rh / V.h);
+      S.scale = s;
+      S.vw = V.w * s;
+      S.vh = V.h * s;
+      S.ox = (rw - S.vw) / 2;
+      S.oy = (rh - S.vh) / 2;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    // Convert pointer coords -> virtual coords
+    function toVirtual(clientX, clientY){
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      const vx = (x - S.ox) / S.scale;
+      const vy = (y - S.oy) / S.scale;
+      return { x:vx, y:vy };
+    }
 
     // Game state
-    let running = false;
-    let paused = false;
-    let gameOver = false;
+    let running=false, paused=false, gameOver=false;
+    let score=0, level=1, combo=1, comboTimer=0, timeAlive=0;
 
-    let score = 0;
-    let best = Number(localStorage.getItem("neon_best") || 0);
-    uiBest.textContent = best.toString();
+    let best = Number(localStorage.getItem("neon2_best") || 0);
+    uiBest.textContent = String(best);
 
-    let level = 1;
-    let timeAlive = 0;
-
-    const rnd = (a,b)=>a + Math.random()*(b-a);
-    const clamp = (v,a,b)=>Math.max(a, Math.min(b, v));
+    const clamp=(v,a,b)=>Math.max(a, Math.min(b, v));
+    const rnd=(a,b)=>a + Math.random()*(b-a);
 
     // Player
     const player = {
-      x: W*0.5,
-      y: H*0.82,
+      x: V.w*0.5,
+      y: V.h*0.80,
       r: 18,
-      vx: 0,
-      speed: 900, // px/s responsiveness
+      targetX: V.w*0.5,
+      maxSpeed: 900, // virtual px/s
+      shield: 0,     // seconds
+      magnet: 0,     // seconds
+      slow: 0        // seconds
     };
 
     // Entities
     const obstacles = [];
     const stars = [];
+    const powerups = []; // {x,y,kind}
+
+    // Background particles
+    const bg = Array.from({length:160}, ()=>({x:Math.random()*V.w, y:Math.random()*V.h, r:rnd(0.6,1.6), s:rnd(18,80)}));
 
     function resetGame(){
-      running = true; paused = false; gameOver = false;
-      score = 0; level = 1; timeAlive = 0;
-      player.x = W*0.5; player.vx = 0;
-      obstacles.length = 0;
-      stars.length = 0;
-      uiScore.textContent = "0";
-      uiLevel.textContent = "1";
+      running=true; paused=false; gameOver=false;
+      score=0; level=1; combo=1; comboTimer=0; timeAlive=0;
+      player.x = V.w*0.5;
+      player.targetX = player.x;
+      player.shield=0; player.magnet=0; player.slow=0;
+      obstacles.length=0; stars.length=0; powerups.length=0;
+      uiScore.textContent="0";
+      uiLevel.textContent="1";
+      uiCombo.textContent="x1";
     }
 
+    // Spawns
+    let tObs=0, tStar=0, tPow=0;
+
     function spawnObstacle(){
-      const w = rnd(42, 90);
-      const x = rnd(w*0.8, W - w*0.8);
-      const y = -rnd(60, 220);
-      const speed = 260 + level*55 + rnd(-20, 40);
-      obstacles.push({ x, y, w, h: w*1.1, speed });
+      const w = rnd(46, 96);
+      const x = rnd(w*0.8, V.w - w*0.8);
+      const y = -rnd(80, 220);
+      const base = 260 + level*55;
+      obstacles.push({ x, y, w, h:w*1.15, speed: base + rnd(-25, 55) });
     }
 
     function spawnStar(){
-      const x = rnd(24, W-24);
-      const y = -rnd(80, 360);
-      const speed = 230 + level*45 + rnd(-20, 20);
-      stars.push({ x, y, r: 10, speed, pulse: rnd(0, Math.PI*2) });
+      const x = rnd(26, V.w-26);
+      const y = -rnd(120, 520);
+      const base = 250 + level*40;
+      stars.push({ x, y, r: 10, speed: base + rnd(-25, 35), pulse:rnd(0,Math.PI*2) });
     }
 
-    let obstacleTimer = 0;
-    let starTimer = 0;
+    function spawnPowerup(){
+      const kinds = ["shield","slow","magnet"];
+      const kind = kinds[Math.floor(Math.random()*kinds.length)];
+      const x = rnd(40, V.w-40);
+      const y = -rnd(160, 700);
+      const base = 240 + level*35;
+      powerups.push({ x, y, r: 14, kind, speed: base + rnd(-10, 30), pulse:rnd(0,Math.PI*2) });
+    }
 
-    // Input: keyboard + touch drag
+    // Input
     const keys = { left:false, right:false };
 
     window.addEventListener("keydown", (e)=>{
@@ -246,72 +406,113 @@
       if (e.key === "ArrowRight") keys.right = false;
     });
 
-    let dragging = false;
-    let lastX = 0;
-
+    let dragging=false;
     canvas.addEventListener("pointerdown", (e)=>{
-      dragging = true;
-      lastX = e.clientX;
+      dragging=true;
       canvas.setPointerCapture(e.pointerId);
+      const p = toVirtual(e.clientX, e.clientY);
+      player.targetX = clamp(p.x, player.r+18, V.w-player.r-18);
     });
     canvas.addEventListener("pointermove", (e)=>{
       if (!dragging) return;
-      const dx = e.clientX - lastX;
-      lastX = e.clientX;
-
-      // Convert screen dx to internal dx roughly by relative scale
-      const rect = canvas.getBoundingClientRect();
-      const scale = W / rect.width;
-      player.x += dx * scale;
-      player.x = clamp(player.x, player.r+18, W - player.r-18);
+      const p = toVirtual(e.clientX, e.clientY);
+      player.targetX = clamp(p.x, player.r+18, V.w-player.r-18);
     });
-    canvas.addEventListener("pointerup", ()=> dragging = false);
-    canvas.addEventListener("pointercancel", ()=> dragging = false);
+    canvas.addEventListener("pointerup", ()=> dragging=false);
+    canvas.addEventListener("pointercancel", ()=> dragging=false);
 
-    // Buttons
-    btnHow.onclick = ()=>{ startCard.classList.add("hide"); howCard.classList.remove("hide"); };
-    btnBack.onclick = ()=>{ howCard.classList.add("hide"); startCard.classList.remove("hide"); };
-    btnStart.onclick = start;
-    btnStart2.onclick = start;
+    // UI navigation
+    btnPlay.onclick = start;
+    btnPlay2.onclick = start;
     btnRetry.onclick = start;
 
-    btnShare.onclick = ()=>{
-      const text = `Neon Dodger — Score: ${Math.floor(score)} (Best: ${best})`;
-      if (TG) {
-        try { TG.sendData(JSON.stringify({ type:"share", text, score:Math.floor(score), best })); } catch {}
-      } else {
-        try { navigator.clipboard.writeText(text); } catch {}
-        showinfo("کپی شد", "متن رکورد در کلیپ‌بورد کپی شد.");
-      }
+    btnSettings.onclick = ()=>{
+      cardHome.classList.add("hide");
+      cardOver.classList.add("hide");
+      cardSettings.classList.remove("hide");
+      overlay.classList.remove("hide");
+      overlay.style.pointerEvents = "auto";
+    };
+    btnBackHome.onclick = ()=>{
+      cardSettings.classList.add("hide");
+      cardOver.classList.add("hide");
+      cardHome.classList.remove("hide");
+      overlay.classList.remove("hide");
+      overlay.style.pointerEvents = "auto";
     };
 
-    function showinfo(title, msg){
-      alert(title + "\n\n" + msg);
-    }
+    btnShare.onclick = ()=>{
+      const msg = `Neon Dodger 2 — Score: ${Math.floor(score)} | Best: ${best} | Level: ${level}`;
+      if (TG) {
+        try { TG.sendData(JSON.stringify({ type:"share", text:msg, score:Math.floor(score), best, level })); } catch {}
+      } else {
+        try { navigator.clipboard.writeText(msg); } catch {}
+        alert("متن رکورد کپی شد:\n\n" + msg);
+      }
+    };
 
     function togglePause(){
       if (!running || gameOver) return;
       paused = !paused;
-      if (TG) { try { TG.HapticFeedback.impactOccurred("light"); } catch {} }
+      if (paused) beep(220, 0.05, "square", 0.02);
+      else beep(520, 0.05, "square", 0.02);
+      haptic("light");
     }
 
     function start(){
+      saveSettings();
       resetGame();
-      overlay.style.pointerEvents = "none";
-      startCard.classList.add("hide");
-      howCard.classList.add("hide");
-      overCard.classList.add("hide");
       overlay.classList.add("hide");
+      overlay.style.pointerEvents = "none";
       requestAnimationFrame(loop);
-      if (TG) { try { TG.HapticFeedback.notificationOccurred("success"); } catch {} }
+      beep(740, 0.06, "sine", 0.03);
+      haptic("light");
     }
 
-    // Rendering helpers
-    function glowCircle(x,y,r,color,alpha=1){
+    // Collisions
+    function circleHit(cx,cy,cr, x,y,r){
+      const dx=cx-x, dy=cy-y;
+      return dx*dx+dy*dy <= (cr+r)*(cr+r);
+    }
+    function circleRect(cx,cy,cr, rx,ry,rw,rh){
+      const nx = clamp(cx, rx, rx+rw);
+      const ny = clamp(cy, ry, ry+rh);
+      const dx = cx - nx, dy = cy - ny;
+      return dx*dx + dy*dy <= cr*cr;
+    }
+
+    // Render helpers (in virtual coords)
+    function beginScene(){
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0,0, rect.width, rect.height);
+
+      // Letterbox background
+      const bgGrad = ctx.createLinearGradient(0,0,0,rect.height);
+      bgGrad.addColorStop(0,"rgba(20,32,90,.25)");
+      bgGrad.addColorStop(1,"rgba(0,0,0,.35)");
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0,0,rect.width,rect.height);
+
+      // Clip to game area
+      ctx.save();
+      ctx.translate(S.ox, S.oy);
+      ctx.beginPath();
+      ctx.rect(0,0,S.vw,S.vh);
+      ctx.clip();
+
+      // Virtual transform
+      ctx.scale(S.scale, S.scale);
+    }
+
+    function endScene(){
+      ctx.restore(); // clip
+    }
+
+    function glowCircle(x,y,r,color,alpha=1, blur=18){
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.shadowColor = color;
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = blur;
       ctx.fillStyle = color;
       ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
       ctx.restore();
@@ -327,16 +528,6 @@
       ctx.arcTo(x, y, x+w, y, rr);
       ctx.closePath();
     }
-
-    function intersectsCircleRect(cx, cy, cr, rx, ry, rw, rh){
-      const nx = clamp(cx, rx, rx+rw);
-      const ny = clamp(cy, ry, ry+rh);
-      const dx = cx - nx, dy = cy - ny;
-      return (dx*dx + dy*dy) <= cr*cr;
-    }
-
-    // Background stars
-    const bg = Array.from({length:120}, ()=>({x:Math.random()*W, y:Math.random()*H, r:rnd(0.6,1.6), s:rnd(10,60)}));
 
     // Main loop
     let lastT = performance.now();
@@ -355,67 +546,146 @@
     function update(dt){
       timeAlive += dt;
 
-      // Level up every 20s
-      const newLevel = 1 + Math.floor(timeAlive / 20);
+      // Level every 18s, faster ramp than previous version
+      const newLevel = 1 + Math.floor(timeAlive / 18);
       if (newLevel !== level){
         level = newLevel;
         uiLevel.textContent = String(level);
-        if (TG) { try { TG.HapticFeedback.notificationOccurred("success"); } catch {} }
+        beep(620, 0.05, "triangle", 0.02);
+        haptic("light");
       }
 
-      // Score increases with time & level
-      score += dt * (35 + level*6);
+      // Powerup timers
+      player.shield = Math.max(0, player.shield - dt);
+      player.magnet = Math.max(0, player.magnet - dt);
+      player.slow   = Math.max(0, player.slow - dt);
+
+      // Combo timer
+      comboTimer = Math.max(0, comboTimer - dt);
+      if (comboTimer === 0 && combo !== 1){
+        combo = 1;
+        uiCombo.textContent = "x1";
+      }
+
+      // Score increases with level and combo
+      const slowFactor = player.slow > 0 ? 0.72 : 1;
+      score += dt * (40 + level*7) * combo;
       uiScore.textContent = String(Math.floor(score));
 
-      // Keyboard movement (smooth)
+      // Keyboard target nudge
       const dir = (keys.right?1:0) - (keys.left?1:0);
-      player.vx = dir * player.speed;
-      player.x += player.vx * dt;
-      player.x = clamp(player.x, player.r+18, W - player.r-18);
-
-      // Spawning
-      obstacleTimer -= dt;
-      starTimer -= dt;
-
-      const obstacleRate = clamp(0.65 - level*0.03, 0.22, 0.65);
-      const starRate = 1.05;
-
-      if (obstacleTimer <= 0){
-        obstacleTimer = obstacleRate * rnd(0.85, 1.15);
-        spawnObstacle();
-        if (level >= 5 && Math.random() < 0.35) spawnObstacle();
+      if (dir !== 0){
+        player.targetX += dir * dt * 650;
+        player.targetX = clamp(player.targetX, player.r+18, V.w-player.r-18);
       }
-      if (starTimer <= 0){
-        starTimer = starRate * rnd(0.9, 1.2);
-        if (Math.random() < 0.85) spawnStar();
+
+      // Smooth follow targetX
+      const dx = player.targetX - player.x;
+      const maxStep = player.maxSpeed * dt;
+      player.x += clamp(dx, -maxStep, maxStep);
+      player.x = clamp(player.x, player.r+18, V.w-player.r-18);
+
+      // Spawn cadence
+      tObs -= dt; tStar -= dt; tPow -= dt;
+
+      const obsRate = clamp(0.62 - level*0.03, 0.18, 0.62);
+      const starRate = 0.95;
+      const powRate = 5.2; // about every 5s
+
+      if (tObs <= 0){
+        tObs = obsRate * rnd(0.85, 1.15);
+        spawnObstacle();
+        if (level >= 4 && Math.random() < 0.35) spawnObstacle();
+        if (level >= 7 && Math.random() < 0.20) spawnObstacle();
+      }
+
+      if (tStar <= 0){
+        tStar = starRate * rnd(0.85, 1.2);
+        if (Math.random() < 0.9) spawnStar();
+      }
+
+      if (tPow <= 0){
+        tPow = powRate * rnd(0.85, 1.2);
+        if (Math.random() < 0.9) spawnPowerup();
       }
 
       // Update obstacles
       for (let i=obstacles.length-1; i>=0; i--){
         const o = obstacles[i];
-        o.y += o.speed * dt;
-        if (o.y > H + 140) obstacles.splice(i,1);
-        else if (intersectsCircleRect(player.x, player.y, player.r, o.x - o.w/2, o.y - o.h/2, o.w, o.h)){
-          endGame();
-          return;
+        o.y += o.speed * dt * slowFactor;
+        if (o.y > V.h + 180) obstacles.splice(i,1);
+        else if (circleRect(player.x, player.y, player.r, o.x - o.w/2, o.y - o.h/2, o.w, o.h)){
+          if (player.shield > 0){
+            // consume shield, destroy obstacle
+            player.shield = 0;
+            obstacles.splice(i,1);
+            combo = 1; uiCombo.textContent = "x1";
+            beep(140, 0.08, "sawtooth", 0.03);
+            haptic("medium");
+          } else {
+            endGame();
+            return;
+          }
         }
       }
 
       // Update stars
       for (let i=stars.length-1; i>=0; i--){
         const s = stars[i];
-        s.y += s.speed * dt;
-        s.pulse += dt*5;
-        if (s.y > H + 140) stars.splice(i,1);
-        else {
-          const dx = s.x - player.x, dy = s.y - player.y;
-          if (dx*dx + dy*dy <= (s.r + player.r + 6)**2){
-            score += 120 + level*15;
-            stars.splice(i,1);
-            if (TG) { try { TG.HapticFeedback.impactOccurred("light"); } catch {} }
+        s.y += s.speed * dt * slowFactor;
+        s.pulse += dt*6;
+
+        // magnet effect
+        if (player.magnet > 0){
+          const vx = player.x - s.x;
+          const vy = player.y - s.y;
+          const dist = Math.hypot(vx,vy);
+          if (dist < 220){
+            s.x += (vx / (dist || 1)) * dt * 420;
+            s.y += (vy / (dist || 1)) * dt * 420;
           }
         }
+
+        if (s.y > V.h + 220) stars.splice(i,1);
+        else if (circleHit(player.x, player.y, player.r+6, s.x, s.y, s.r)){
+          // combo reward
+          combo = clamp(combo + 1, 1, 8);
+          comboTimer = 2.2;
+          uiCombo.textContent = "x" + combo;
+
+          score += (120 + level*18) * combo;
+          stars.splice(i,1);
+          beep(520 + combo*40, 0.04, "sine", 0.03);
+          haptic("light");
+        }
       }
+
+      // Update powerups
+      for (let i=powerups.length-1; i>=0; i--){
+        const p = powerups[i];
+        p.y += p.speed * dt * slowFactor;
+        p.pulse += dt*5;
+
+        if (p.y > V.h + 260) powerups.splice(i,1);
+        else if (circleHit(player.x, player.y, player.r+8, p.x, p.y, p.r)){
+          applyPowerup(p.kind);
+          powerups.splice(i,1);
+        }
+      }
+    }
+
+    function applyPowerup(kind){
+      if (kind === "shield"){
+        player.shield = 6.5;
+        beep(320, 0.06, "triangle", 0.03);
+      } else if (kind === "slow"){
+        player.slow = 4.8;
+        beep(240, 0.07, "sine", 0.03);
+      } else if (kind === "magnet"){
+        player.magnet = 6.0;
+        beep(420, 0.06, "square", 0.025);
+      }
+      haptic("light");
     }
 
     function endGame(){
@@ -425,53 +695,46 @@
       const finalScore = Math.floor(score);
       if (finalScore > best){
         best = finalScore;
-        localStorage.setItem("neon_best", String(best));
+        localStorage.setItem("neon2_best", String(best));
         uiBest.textContent = String(best);
       }
 
-      overText.textContent =
-        `Score: ${finalScore}\nBest: ${best}\nLevel: ${level}\n\nنکته: با لمس و کشیدن کنترل دقیق‌تره.`;
+      txtOver.textContent =
+        `امتیاز: ${finalScore}\nرکورد: ${best}\nلول: ${level}\n\nنکته: ستاره‌ها کمبو می‌دن؛ پاورآپ‌ها رو از دست نده.`;
 
       overlay.classList.remove("hide");
       overlay.style.pointerEvents = "auto";
-      overCard.classList.remove("hide");
-      startCard.classList.add("hide");
-      howCard.classList.add("hide");
+      cardOver.classList.remove("hide");
+      cardHome.classList.add("hide");
+      cardSettings.classList.add("hide");
 
-      if (TG) { try { TG.HapticFeedback.notificationOccurred("error"); } catch {} }
+      beep(110, 0.12, "sawtooth", 0.04);
+      haptic("heavy");
     }
 
     function draw(dt){
-      // Background
-      ctx.clearRect(0,0,W,H);
+      beginScene();
 
-      // Subtle gradient
-      const g = ctx.createLinearGradient(0,0,0,H);
-      g.addColorStop(0, "rgba(20,40,80,.25)");
-      g.addColorStop(1, "rgba(0,0,0,.35)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0,0,W,H);
-
-      // Moving bg stars
+      // BG stars
       ctx.save();
-      ctx.globalAlpha = 0.9;
+      ctx.globalAlpha = 0.95;
       ctx.fillStyle = "rgba(255,255,255,.75)";
       for (const p of bg){
         p.y += p.s * dt * (1 + level*0.05);
-        if (p.y > H) { p.y = -10; p.x = Math.random()*W; p.r = rnd(0.6,1.6); p.s = rnd(10,60); }
+        if (p.y > V.h) { p.y = -10; p.x = Math.random()*V.w; p.r=rnd(0.6,1.6); p.s=rnd(18,80); }
         ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
       }
       ctx.restore();
 
-      // Lane glow
+      // Lane lines
       ctx.save();
       ctx.globalAlpha = 0.35;
       ctx.strokeStyle = "rgba(53,240,255,.35)";
       ctx.lineWidth = 2;
       for (let i=1; i<=3; i++){
-        const x = (W/4)*i;
+        const x = (V.w/4)*i;
         ctx.setLineDash([10, 16]);
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, V.h); ctx.stroke();
       }
       ctx.setLineDash([]);
       ctx.restore();
@@ -480,16 +743,15 @@
       for (const o of obstacles){
         const x = o.x - o.w/2, y = o.y - o.h/2;
         ctx.save();
-        ctx.shadowColor = "rgba(255,59,107,.9)";
+        ctx.shadowColor = "rgba(255,59,107,.95)";
         ctx.shadowBlur = 18;
-        ctx.fillStyle = "rgba(255,59,107,.95)";
+        ctx.fillStyle = "rgba(255,59,107,.96)";
         roundedRect(x, y, o.w, o.h, 14);
         ctx.fill();
         ctx.restore();
 
-        // highlight
         ctx.save();
-        ctx.globalAlpha = 0.3;
+        ctx.globalAlpha = 0.28;
         ctx.fillStyle = "rgba(255,255,255,.9)";
         roundedRect(x+8, y+8, o.w-16, 10, 8);
         ctx.fill();
@@ -498,36 +760,85 @@
 
       // Stars
       for (const s of stars){
-        const a = 0.75 + Math.sin(s.pulse)*0.2;
-        glowCircle(s.x, s.y, s.r, "#ffd166", a);
-        glowCircle(s.x, s.y, s.r*0.55, "#fff", 0.65);
+        const a = 0.72 + Math.sin(s.pulse)*0.22;
+        glowCircle(s.x, s.y, s.r, "#ffd166", a, 18);
+        glowCircle(s.x, s.y, s.r*0.55, "#fff", 0.55, 10);
       }
 
-      // Player
-      glowCircle(player.x, player.y, player.r, "#35f0ff", 0.95);
-      glowCircle(player.x, player.y, player.r*0.55, "#ffffff", 0.55);
+      // Powerups
+      for (const p of powerups){
+        const a = 0.72 + Math.sin(p.pulse)*0.22;
+        let color = "#35ff9a";
+        if (p.kind === "shield") color = "#6cf3ff";
+        if (p.kind === "slow") color = "#b39bff";
+        if (p.kind === "magnet") color = "#ffd166";
+
+        glowCircle(p.x, p.y, p.r, color, a, 20);
+
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = "rgba(0,0,0,.35)";
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r*0.55, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.92)";
+        ctx.font = "800 16px ui-sans-serif, system-ui";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        const sym = p.kind === "shield" ? "S" : p.kind === "slow" ? "T" : "M";
+        ctx.fillText(sym, p.x, p.y+1);
+        ctx.restore();
+      }
+
+      // Player base
+      glowCircle(player.x, player.y, player.r, "#35f0ff", 0.95, 20);
+      glowCircle(player.x, player.y, player.r*0.55, "#fff", 0.5, 10);
+
+      // Player powerup rings
+      if (player.shield > 0){
+        ctx.save();
+        ctx.globalAlpha = 0.55;
+        ctx.strokeStyle = "rgba(108,243,255,.95)";
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.r+10, 0, Math.PI*2); ctx.stroke();
+        ctx.restore();
+      }
+      if (player.magnet > 0){
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = "rgba(255,209,102,.95)";
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(player.x, player.y, 120, 0, Math.PI*2); ctx.stroke();
+        ctx.restore();
+      }
+      if (player.slow > 0){
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = "rgba(179,155,255,.9)";
+        ctx.fillRect(0,0,V.w,V.h);
+        ctx.restore();
+      }
 
       // Pause overlay
       if (paused){
         ctx.save();
         ctx.fillStyle = "rgba(0,0,0,.45)";
-        ctx.fillRect(0,0,W,H);
+        ctx.fillRect(0,0,V.w,V.h);
         ctx.fillStyle = "rgba(255,255,255,.92)";
-        ctx.font = "700 44px ui-sans-serif, system-ui";
+        ctx.font = "900 52px ui-sans-serif, system-ui";
         ctx.textAlign = "center";
-        ctx.fillText("PAUSED", W/2, H/2 - 10);
-        ctx.font = "500 20px ui-sans-serif, system-ui";
+        ctx.fillText("PAUSED", V.w/2, V.h/2 - 10);
+        ctx.font = "600 22px ui-sans-serif, system-ui";
         ctx.fillStyle = "rgba(255,255,255,.75)";
-        ctx.fillText("Press P to resume", W/2, H/2 + 28);
+        ctx.fillText("Press P to resume", V.w/2, V.h/2 + 30);
         ctx.restore();
       }
+
+      endScene();
     }
 
-    // Show start screen
+    // Show home card
     overlay.classList.remove("hide");
   </script>
 
-  <!-- Optional Telegram script if you want (safe to omit): -->
+  <!-- Optional: add Telegram script if desired -->
   <!-- <script src="https://telegram.org/js/telegram-web-app.js"></script> -->
 </body>
 </html>
