@@ -1,394 +1,150 @@
-<!doctype html>
-<html lang="fa" dir="rtl">
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Calculator</title>
     <link rel="icon" href="data:," />
-    <title>Space Rush — Telegram Mini Game</title>
     <style>
-        :root {
-            --bg0: #050713;
-            --bg1: #0b1030;
-            --panel: rgba(255, 255, 255, .06);
-            --text: rgba(255, 255, 255, .92);
-            --muted: rgba(255, 255, 255, .68);
-            --neon: #35f0ff;
-            --danger: #ff3b6b;
-            --gold: #ffd166;
-            --ok: #35ff9a;
-            --shadow: 0 10px 32px rgba(0, 0, 0, .48);
-            --radius: 16px;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html,
         body {
-            height: 100%;
-            margin: 0;
-            background: radial-gradient(1100px 800px at 50% 18%, #142066 0%, var(--bg0) 55%, #04050c 100%);
-            color: var(--text);
-            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-        }
-
-        .wrap {
-            height: 100%;
-            display: grid;
-            grid-template-rows: auto 1fr auto;
-            padding: 12px;
-            gap: 10px;
-            max-width: 820px;
-            margin: 0 auto;
-        }
-
-        .topbar {
+            font-family: Arial, sans-serif;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 12px 14px;
-            border-radius: var(--radius);
-            background: var(--panel);
-            box-shadow: var(--shadow);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, .08);
-        }
-
-        .brand {
-            display: flex;
-            flex-direction: column;
-            gap: 2px
-        }
-
-        .brand b {
-            letter-spacing: .4px
-        }
-
-        .brand small {
-            color: var(--muted);
-            line-height: 1.35
-        }
-
-        .stats {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: flex-end
-        }
-
-        .pill {
-            padding: 8px 10px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, .07);
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            min-width: 118px;
-            justify-content: space-between;
-            border: 1px solid rgba(255, 255, 255, .08);
-        }
-
-        .pill span {
-            color: var(--muted);
-            font-size: 12px
-        }
-
-        .pill b {
-            font-variant-numeric: tabular-nums;
-        }
-
-        .stage {
-            position: relative;
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(255, 255, 255, .10);
-            background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
-            min-height: 340px;
-        }
-
-        .stage::before {
-            content: "";
-            display: block;
-            padding-top: 177.777%;
-        }
-
-        /* 16/9 */
-        canvas {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            display: block;
-            background: #050814;
-            touch-action: none;
-        }
-
-        .hud {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            pointer-events: none;
-        }
-
-        .card {
-            pointer-events: auto;
-            width: min(620px, calc(100% - 24px));
-            background: rgba(9, 11, 20, .82);
-            border: 1px solid rgba(255, 255, 255, .12);
-            border-radius: 18px;
-            padding: 16px;
-            backdrop-filter: blur(10px);
-            box-shadow: var(--shadow);
-        }
-
-        .card h2 {
-            margin: 0 0 6px;
-            font-size: 18px
-        }
-
-        .card p {
-            margin: 0 0 12px;
-            color: var(--muted);
-            line-height: 1.7;
-            font-size: 13px
-        }
-
-        .grid {
-            display: grid;
-            gap: 10px;
-            grid-template-columns: 1fr 1fr
-        }
-
-        button {
-            border: 0;
-            border-radius: 14px;
-            padding: 12px 12px;
-            font-weight: 800;
-            background: linear-gradient(135deg, rgba(53, 240, 255, .96), rgba(90, 120, 255, .96));
-            color: #06101a;
-            cursor: pointer;
-            box-shadow: 0 10px 26px rgba(53, 240, 255, .22);
-        }
-
-        button.secondary {
-            background: rgba(255, 255, 255, .08);
-            color: var(--text);
-            box-shadow: none;
-            border: 1px solid rgba(255, 255, 255, .12);
-        }
-
-        button.danger {
-            background: linear-gradient(135deg, rgba(255, 59, 107, .95), rgba(255, 132, 74, .95));
-            color: #14070b;
-            box-shadow: 0 10px 26px rgba(255, 59, 107, .16);
-        }
-
-        .kbd {
-            border: 1px solid rgba(255, 255, 255, .12);
-            border-bottom-width: 2px;
-            padding: 3px 8px;
-            border-radius: 10px;
-            color: var(--text);
-            background: rgba(255, 255, 255, .06)
-        }
-
-        .row {
-            display: flex;
-            gap: 10px;
             align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-
-        .toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: space-between;
-            padding: 10px 12px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, .06);
-            border: 1px solid rgba(255, 255, 255, .10);
-            margin-top: 10px;
-        }
-
-        .toggle label {
-            color: var(--muted);
-            font-size: 13px
-        }
-
-        .toggle input {
-            width: 42px;
-            height: 22px
-        }
-
-        .select {
-            margin-top: 10px;
-            padding: 10px 12px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, .06);
-            border: 1px solid rgba(255, 255, 255, .10);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        select {
-            background: rgba(255, 255, 255, .08);
-            color: var(--text);
-            border: 1px solid rgba(255, 255, 255, .14);
-            border-radius: 10px;
-            padding: 8px 10px;
-            outline: none;
-        }
-
-        .lb {
-            margin-top: 10px;
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, .10);
-            overflow: hidden;
-        }
-
-        .lb table {
+        .calculator {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 30px;
+            max-width: 400px;
             width: 100%;
-            border-collapse: collapse;
-            font-variant-numeric: tabular-nums;
         }
-
-        .lb th,
-        .lb td {
-            padding: 10px 10px;
-            font-size: 13px;
-            text-align: right
+        .display {
+            width: 100%;
+            height: 60px;
+            font-size: 28px;
+            text-align: right;
+            margin-bottom: 20px;
+            padding: 15px;
+            box-sizing: border-box;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: #f9f9f9;
         }
-
-        .lb th {
-            color: var(--muted);
-            background: rgba(255, 255, 255, .06)
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
         }
-
-        .lb tr:nth-child(even) td {
-            background: rgba(255, 255, 255, .03)
+        button {
+            height: 60px;
+            font-size: 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
         }
-
-        .lb td:nth-child(1) {
-            width: 60px;
-            color: rgba(255, 255, 255, .78)
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-
-        .lb td:nth-child(3) {
-            text-align: left;
-            color: rgba(255, 255, 255, .78)
+        .number {
+            background: #e0e0e0;
+            color: #333;
         }
-
-        .footer {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            padding: 10px 14px;
-            border-radius: var(--radius);
-            background: rgba(255, 255, 255, .04);
-            border: 1px solid rgba(255, 255, 255, .06);
-            color: var(--muted);
-            font-size: 12px;
+        .operator {
+            background: #ff9500;
+            color: white;
         }
-
-        .hide {
-            display: none !important;
+        .equal {
+            background: #4caf50;
+            color: white;
+            grid-column: span 2;
+        }
+        .clear {
+            background: #f44336;
+            color: white;
         }
     </style>
 </head>
-
 <body>
-    <div class="wrap">
-        <div class="topbar">
-            <div class="brand"> <b>Space Rush</b> <small>پرواز کن، شلیک کن، از شهاب‌سنگ‌ها و دشمن‌ها رد شو</small>
-            </div>
-            <div class="stats">
-                <div class="pill"><span>Score</span><b id="uiScore">0</b></div>
-                <div class="pill"><span>Best</span><b id="uiBest">0</b></div>
-                <div class="pill"><span>Level</span><b id="uiLevel">1</b></div>
-                <div class="pill"><span>HP</span><b id="uiHp">3</b></div>
-            </div>
-        </div>
-        <div class="stage"> <canvas id="game"></canvas>
-            <div class="hud" id="overlay">
-                <div class="card" id="cardHome">
-                    <h2>شروع</h2>
-                    <p> کنترل: <span class="kbd">لمس و کشیدن</span> (آزاد) یا کیبورد <span class="kbd">WASD</span>/<span
-                            class="kbd">↑↓←→</span>. شلیک: <span class="kbd">Space</span> یا <span class="kbd">Double
-                            Tap</span>. <br />هرچی بیشتر زنده بمونی Level و موج دشمن‌ها سخت‌تر می‌شه. </p>
-                    <div class="grid"> <button id="btnPlay">Play</button> <button class="secondary"
-                            id="btnSettings">Settings</button> </div>
-                    <p style="margin-top:10px;color:var(--muted)"> Pause: <span class="kbd">P</span> — Leaderboard:
-                        <span class="kbd">L</span> </p>
-                </div>
-                <div class="card hide" id="cardSettings">
-                    <h2>Settings</h2>
-                    <p>تنظیمات روی دستگاه ذخیره می‌شن. لیدربورد آنلاین اگر بک‌اند وصل باشد فعال می‌شود.</p>
-                    <div class="toggle"> <label for="tglMute">Sound (Mute)</label> <input id="tglMute"
-                            type="checkbox" /> </div>
-                    <div class="toggle"> <label for="tglHaptics">Haptics (Vibration)</label> <input id="tglHaptics"
-                            type="checkbox" checked /> </div>
-                    <div class="select"> <label for="selQuality"
-                            style="color:var(--muted); font-size:13px">Quality</label> <select id="selQuality">
-                            <option value="1">High</option>
-                            <option value="0.85">Medium</option>
-                            <option value="0.7">Low</option>
-                        </select> </div>
-                    <div class="select"> <label for="inpApi" style="color:var(--muted); font-size:13px">Leaderboard API
-                            base URL</label> <input id="inpApi"
-                            style="flex:1; min-width:180px; padding:10px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:var(--text); outline:none"
-                            placeholder="https://your-domain.com" /> </div>
-                    <div class="grid" style="margin-top:12px"> <button class="secondary" id="btnBackHome">Back</button>
-                        <button id="btnPlay2">Play</button> </div>
-                </div>
-                <div class="card hide" id="cardOver">
-                    <h2>Game Over</h2>
-                    <p id="txtOver">—</p>
-                    <div class="grid"> <button id="btnRetry">Retry</button> <button class="secondary"
-                            id="btnLeaderboard">Leaderboard</button> </div>
-                    <div class="grid" style="margin-top:10px"> <button class="secondary" id="btnShare">Share
-                            score</button> <button class="danger" id="btnSubmit">Submit score</button> </div>
-                </div>
-                <div class="card hide" id="cardLB">
-                    <h2>Leaderboard</h2>
-                    <p id="lbHint">—</p>
-                    <div class="lb">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Player</th>
-                                    <th>Score</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lbBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="grid" style="margin-top:12px"> <button class="secondary" id="btnCloseLB">Close</button>
-                        <button id="btnRefreshLB">Refresh</button> </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer">
-            <div> <span class="kbd">Touch</span> <span class="kbd">WASD</span> <span class="kbd">Space</span> Shoot
-            </div>
-            <div id="tgState">Telegram: not detected</div>
+    <div class="calculator">
+        <input type="text" class="display" id="display" readonly>
+        <div class="buttons">
+            <button class="clear" onclick="clearDisplay()">C</button>
+            <button class="operator" onclick="appendToDisplay('/')">/</button>
+            <button class="operator" onclick="appendToDisplay('*')">*</button>
+            <button class="operator" onclick="appendToDisplay('-')">-</button>
+            <button class="number" onclick="appendToDisplay('7')">7</button>
+            <button class="number" onclick="appendToDisplay('8')">8</button>
+            <button class="number" onclick="appendToDisplay('9')">9</button>
+            <button class="operator" onclick="appendToDisplay('+')">+</button>
+            <button class="number" onclick="appendToDisplay('4')">4</button>
+            <button class="number" onclick="appendToDisplay('5')">5</button>
+            <button class="number" onclick="appendToDisplay('6')">6</button>
+            <button class="equal" onclick="calculate()">=</button>
+            <button class="number" onclick="appendToDisplay('1')">1</button>
+            <button class="number" onclick="appendToDisplay('2')">2</button>
+            <button class="number" onclick="appendToDisplay('3')">3</button>
+            <button class="number" onclick="appendToDisplay('0')">0</button>
+            <button class="number" onclick="appendToDisplay('.')">.</button>
         </div>
     </div>
-    <script> 
-         </script>
+    <script>
+        let display = document.getElementById('display');
+        let currentInput = '';
+        let operator = '';
+        let previousInput = '';
+
+        function appendToDisplay(value) {
+            if (value >= '0' && value <= '9' || value === '.') {
+                currentInput += value;
+                display.value = currentInput;
+            } else {
+                if (currentInput) {
+                    if (previousInput && operator) {
+                        previousInput = eval(previousInput + operator + currentInput);
+                        display.value = previousInput;
+                    } else {
+                        previousInput = currentInput;
+                    }
+                    operator = value;
+                    currentInput = '';
+                }
+            }
+        }
+
+        function calculate() {
+            if (previousInput && operator && currentInput) {
+                try {
+                    let result = eval(previousInput + operator + currentInput);
+                    display.value = result;
+                    currentInput = result.toString();
+                    previousInput = '';
+                    operator = '';
+                } catch (e) {
+                    display.value = 'Error';
+                    clearAll();
+                }
+            }
+        }
+
+        function clearDisplay() {
+            currentInput = '';
+            display.value = '';
+        }
+
+        function clearAll() {
+            currentInput = '';
+            previousInput = '';
+            operator = '';
+            display.value = '';
+        }
+    </script>
 </body>
 </html>
